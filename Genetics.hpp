@@ -32,6 +32,7 @@ public:
         lng = lng1;
         name = name1;
     }
+    City& operator= (const City & c);
 };
 
 /**
@@ -60,7 +61,9 @@ public:
     /**
      * Default constructor.
      */
-    Tour();
+    Tour(){
+
+    }
 
     /**
      * Construct tour with data.
@@ -69,6 +72,7 @@ public:
      */
     Tour(double fitness1, vector<City> data1) {
         fitness = fitness1;
+        distance = 1/fitness;
         data = data1;
     }
 
@@ -76,7 +80,7 @@ public:
      * Get the vector of tour data.
      * @return
      */
-    vector<City> getData() {
+    vector<City>& getData() {
         return this->data;
     }
     /**
@@ -134,11 +138,11 @@ private:
      * Constants provided.
      */
     int CITIES_IN_TOUR;
-    int POPULATION_SIZE = 10;
+    int POPULATION_SIZE = 20;
     int SHUFFLES = 69;
     int ITERATIONS = 1000;
     int MAP_BOUNDARY = 1000;
-    int PARENT_POOL_SIZE = 5;
+    int PARENT_POOL_SIZE = 10;
     int MUTATION_RATE = 15;
     int NUMBER_OF_ELITES = 1;
 
@@ -153,7 +157,7 @@ public:
      * Return the initialized cities in the population class.
      * @return
      */
-    vector<City> getCities();
+    vector<City>& getCities();
 
     /**
      * Read cities from the textfile.
@@ -167,6 +171,12 @@ public:
      * @return
      */
     vector<City> shuffle_cities(vector<City> t);
+
+    /**
+     * Print cities.
+     * @param t
+     */
+    void printCity(vector<City> t);
 
     /**
      * Get distance between cities.
@@ -202,13 +212,13 @@ public:
      * Combine two parents to make a child.
      * @return
      */
-    vector<Tour> crossover(vector<Tour>);
+    vector<Tour> crossover(vector<Tour> parents);
 
     /**
      * Mutate a child.
      * @return
      */
-    void mutate(vector<City> c);
+    void mutate(vector<City>& c);
 
     /**
      * Initial run method.

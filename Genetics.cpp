@@ -12,8 +12,16 @@ bool Tour::operator > (const Tour & m) const
     return (distance > m.distance);
 }
 
+City& City::operator= (const City & c)
+{
+    lat = c.lat;
+    lng = c.lng;
+    name = c.name;
+    return *this;
+}
 
-vector<City> Population::getCities() {
+
+vector<City>& Population::getCities() {
     return this->allCities;
 }
 
@@ -26,6 +34,7 @@ vector<City> Population::shuffle_cities(vector<City> t) {
         int position = dis(gen);
         int nextPosition = dis(gen);
         iter_swap(temp.begin() + position, temp.begin() + nextPosition);
+        //swap(temp[position], temp[nextPosition]);
     }
     return temp;
 }
@@ -82,11 +91,10 @@ void Population::readCities(string fileName) {
     }
 }
 
-void Population::sortedPrint(vector<City> n) {
+void Population::sortedPrint (vector<City> n) {
     vector<City>::iterator it;
+    for (it = n.begin(); it != n.end(); it++) {
 
-    for (it = n.begin(); it != n.end(); it++)
-    {
         cout<<(*it).name<<" : "<<(*it).lat<<" "<<(*it).lng;
         cout<<endl;
     }
@@ -105,65 +113,74 @@ double Population::determine_fitness(vector<City> t) {
 vector<Tour> Population::select_parents(vector<Tour> temp) {
     vector<Tour>::iterator it;
     vector<Tour> temp1;
-    for (it = temp.begin(); it != temp.end(); it++)
+    for (it = temp.begin(); it < temp.end(); it++)
     {
         (*it).distance = get_tour_distance((*it).getData());
 
         (*it).fitness = 1/(*it).distance;
     }
-    sort (temp.begin(), temp.end());
-    for (it = temp.begin(); it != temp.begin()+5; it++)
+   sort (temp.begin(), temp.end());
+    it = temp.begin();
+    for (it = temp.begin(); it < temp.begin()+10; it++)
     {
         temp1.push_back(*it);
     }
-
     return temp1;
 }
 
 vector<Tour> Population::crossover(vector<Tour> parents) {
     vector<Tour> children;
-    vector<City> childrenData;
-
-    parents = select_parents(parents);
+    Tour childrenData;
 
     random_device rd;
     mt19937 gen(rd());
 //Standard mersenne_twister_engine seeded with rd()
     uniform_int_distribution<int> dis(0, 100);
     uniform_int_distribution<int> dis2(0, CITIES_IN_TOUR-1);
-    cout<<"Test"<<endl;
 //    vector<Tour>::iterator pit;
 //    vector<City>::iterator cityTemp;
-
-    for (auto pit = parents.begin(); pit != parents.end(); pit++)
+    int a = 0;
+    int noChildren = 0;
+    while(noChildren < POPULATION_SIZE)
     {   int parentChange = dis2(gen);
         int mutationPercent =dis(gen);
         int childTempCount = 0;
-        cout<<"w\n"<<endl;
-        for (auto cityTemp = (*pit).getData().begin(); cityTemp != (*pit).getData().end(); cityTemp++)
+        int b = 0;
+
+        while (childTempCount<CITIES_IN_TOUR-1)
         {
-            cout<<(*cityTemp).name<<endl;
-            if (childTempCount == parentChange) {
-                pit++;
+       //     cout << childTempCount << " < " << (CITIES_IN_TOUR-1) <<"No Children "<< noChildren<< endl;
+             if (childTempCount == parentChange) {
+                 if (a >= PARENT_POOL_SIZE-1){  a = 0;}else{a++;}
+             }
+            if (b == CITIES_IN_TOUR-1) {
+                b = 0;
             }
-            if (childTempCount >= CITIES_IN_TOUR-1) {
-                break;
+
+        //    cout << "parents.size(): " << parents.size() << ", a: " << a << ", getData().size(): " << parents[a].getData().size() << ", b: " << b << endl;
+            if (childrenData.contains_city(parents[a].getData()[b].name)) {
+         //       cout << " contains" << endl;
             }
-            cout<<(*cityTemp).name<<endl;
-            childrenData.push_back(*cityTemp);
-            childTempCount++;
+            else{
+         //       cout << "adding" << endl;
+                childrenData.getData().push_back(parents[a].getData()[b]);
+                childTempCount++;}
+        //    cout << childTempCount << "/" << CITIES_IN_TOUR-1 << endl;
+            b++;
         }
+       // cout<<"Came out"<<endl;
         /**
         * Mutation
-        */
+*/
         if (mutationPercent < MUTATION_RATE) {
-            mutate(childrenData);//Mutate
+            mutate(childrenData.getData());//Mutate
         }
-        Tour tt(0, childrenData);
-        sortedPrint(childrenData);
-        children.push_back(tt);
+        noChildren++;
+      //  cout << childrenData.getData().size() << "/" << CITIES_IN_TOUR << endl;
+        children.push_back(childrenData);
+        childrenData.getData().clear();
     }
-    printTour(children);
+   // cout<<"return";
     return children;
 }
 
@@ -179,40 +196,69 @@ bool Tour::contains_city(string cityName){
 }
 
 void Population::run(){
-    sortedPrint(allCities);
-    double prev = determine_fitness(allCities);
-    double fitness = prev;
+    Tour t;
+    t.setData(allCities);
+    double prevDistance = get_tour_distance(allCities);
+    t.distance = prevDistance;
+    double prevFitness = determine_fitness(allCities);
+    double fitness;
     vector<City> tt;
     Tour tempElite(0, tt);
+    vector<Tour> elite;
     for (int i = 0; i < ITERATIONS; i++) {
         for (int j = 0; j < POPULATION_SIZE; j++) {
             allCities = shuffle_cities(allCities);
-            fitness = determine_fitness(allCities);
-            if (fitness > prev) {
-                Tour t(fitness, allCities);
-                tempElite.setData(allCities);
-                prev = determine_fitness(allCities);
-                elite.push_back(tempElite);
-            }
+            Tour t(fitness, allCities);
+            t.distance = get_tour_distance(allCities);
+            subset.push_back(t);
         }
+        subset = select_parents(subset);
+        subset = crossover(subset);
+
+        if (select_parents(subset)[0].distance < prevDistance) {
+            elite.push_back(select_parents(subset)[0]);
+            cout<<"\nGENERATION " << i << " ELITE"<<endl;
+            printCity(elite[0].getData());
+            prevDistance = select_parents(subset)[0].distance;
+        }
+
     }
-    crossover(elite);
+
 }
 
- void Population::mutate(vector<City> c) {
-    uniform_int_distribution<int> dis2(0, CITIES_IN_TOUR-1);
+ void Population::mutate(vector<City>& c) {
+    uniform_int_distribution<int> dis2(0, c.size()-1);
     vector<City>::iterator pit;
     random_device rd;
     mt19937 gen(rd());
     int a = dis2(gen);
     int b = dis2(gen);
+    //cout<<c.size()<<" "<<a<<" "<<b<<endl;
     iter_swap(c.begin() + a, c.begin() + b);
 }
 
 void Population::printTour(vector<Tour> t) {
+    int tourNumber = 1;
     vector<Tour>::iterator it;
-    for (it = t.begin(); it != t.end(); it++)
-    {
-        sortedPrint((*it).getData());
+    vector<City>::iterator it2;
+    for (it = t.begin(); it != t.end(); it++) {
+        cout<<"Tour " << tourNumber<<endl;
+        for (it2 = (*it).getData().begin(); it2 != (*it).getData().end(); it2++) {
+
+            cout << (*it2).name << ", ";
+        }
+        cout<<get_tour_distance((*it).getData())<<endl;
+        tourNumber++;
     }
+
+}
+
+void Population::printCity(vector<City> t) {
+    vector<City>::iterator it2;
+
+        for (it2 = t.begin(); it2 != t.end(); it2++) {
+
+            cout << (*it2).name << ", ";
+        }
+        cout<<get_tour_distance(t)<<endl;
 }

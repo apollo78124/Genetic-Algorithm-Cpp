@@ -1,4 +1,3 @@
-#include <iostream>
 #include "Genetics.hpp"
 
 int main() {
