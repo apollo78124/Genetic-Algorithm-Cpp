@@ -1,0 +1,9 @@
+city1 1 1
+city2 3 45
+city3 6 49
+city4 11 39
+city5 69 69
+city6 77 77
+city7 1 2
+city8 3 5
+city9 10 18
