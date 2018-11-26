@@ -40,7 +40,7 @@ vector<City> Population::shuffle_cities(vector<City> t) {
 }
 
 double Population::get_tour_distance(vector<City> t) {
-    t= allCities;
+    //t= allCities;
     vector<City>::iterator it;
     double distance = 0;
 
@@ -119,7 +119,7 @@ vector<Tour> Population::select_parents(vector<Tour> temp) {
 
         (*it).fitness = 1/(*it).distance;
     }
-   sort (temp.begin(), temp.end());
+    sort (temp.begin(), temp.end());
     it = temp.begin();
     for (it = temp.begin(); it < temp.begin()+10; it++)
     {
@@ -205,22 +205,26 @@ void Population::run(){
     vector<City> tt;
     Tour tempElite(0, tt);
     vector<Tour> elite;
+    for (int j = 0; j < POPULATION_SIZE; j++) {
+        allCities = shuffle_cities(allCities);
+        Tour t(fitness, allCities);
+        t.distance = get_tour_distance(allCities);
+        subset.push_back(t);
+    }
     for (int i = 0; i < ITERATIONS; i++) {
-        for (int j = 0; j < POPULATION_SIZE; j++) {
-            allCities = shuffle_cities(allCities);
-            Tour t(fitness, allCities);
-            t.distance = get_tour_distance(allCities);
-            subset.push_back(t);
-        }
+        //cout << "........ 1 -> " << subset.size() << endl;
         subset = select_parents(subset);
+        //printTour(subset);
+        //cout << "........ 2 -> " << subset.size() << endl;
         subset = crossover(subset);
+        //printTour(subset);
+        //cout << "........ 3 -> " << subset.size() << endl;
 
-        if (select_parents(subset)[0].distance < prevDistance) {
+
             elite.push_back(select_parents(subset)[0]);
-            cout<<"\nGENERATION " << i << " ELITE"<<endl;
-            printCity(elite[0].getData());
+            cout<<"\nGENERATION " << i << " ELITE "<< elite.size() << endl;
+            printCity(elite[i].getData());
             prevDistance = select_parents(subset)[0].distance;
-        }
 
     }
 
